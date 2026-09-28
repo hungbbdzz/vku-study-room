@@ -1,22 +1,27 @@
 {
   "expo": {
-    "name": "vku-study-room",
+    "name": "VKU Study Room",
     "slug": "vku-study-room",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0b1528"
+    },
+    "scheme": "vkustudyroom",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "vn.edu.vku.studyroom"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0b1528"
       },
-      "predictiveBackGestureEnabled": false
+      "package": "vn.edu.vku.studyroom"
     },
     "web": {
       "favicon": "./assets/favicon.png"
