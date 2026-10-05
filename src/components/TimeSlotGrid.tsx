@@ -44,7 +44,7 @@ export default function TimeSlotGrid({
               {slot.label}
             </Text>
             {isBooked && (
-              <Text style={styles.slotSubText}>Đã đặt</Text>
+              <Text style={styles.slotSubText}>🔒 Đã đặt</Text>
             )}
             {!isBooked && isSelected && (
               <Text style={styles.slotSubText}>✓ Đã chọn</Text>

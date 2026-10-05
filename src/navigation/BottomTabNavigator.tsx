@@ -4,6 +4,7 @@ import { Text, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeScreen from '../screens/HomeScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import { COLORS, RADIUS } from '../theme/colors';
 import { BottomTabParamList } from './types';
 
@@ -43,6 +44,14 @@ export default function BottomTabNavigator() {
         options={{
           tabBarLabel: 'Lịch đặt',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Hồ sơ',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>👤</Text>,
         }}
       />
     </Tab.Navigator>

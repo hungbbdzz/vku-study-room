@@ -37,11 +37,14 @@ const INITIAL_BOOKINGS: BookingRecord[] = [
 
 interface BookingState {
   user: StudentSession;
+  isLoggedIn: boolean;
   bookings: BookingRecord[];
   filter: FilterParams;
 
   // Actions
   setUser: (user: StudentSession) => void;
+  login: (user: StudentSession) => void;
+  logout: () => void;
   createBooking: (booking: BookingRecord) => void;
   cancelBooking: (bookingId: string) => void;
   setFilter: (filter: Partial<FilterParams>) => void;
@@ -59,18 +62,25 @@ const DEFAULT_FILTER: FilterParams = {
 
 const DEFAULT_USER: StudentSession = {
   name: 'Nguyễn Văn A',
-  studentId: '20IT001',
-  studentClass: 'CNTT2020A',
+  studentId: '22IT001',
+  studentClass: 'CNTT2022A',
+  email: '22it001@vku.udn.vn',
+  faculty: 'Khoa Khoa học Máy tính',
 };
 
 export const useBookingStore = create<BookingState>()(
   persist(
     (set, get) => ({
       user: DEFAULT_USER,
+      isLoggedIn: true, // Default to true for instant demo, can be toggled via login/logout
       bookings: INITIAL_BOOKINGS,
       filter: DEFAULT_FILTER,
 
       setUser: (user) => set({ user }),
+
+      login: (user) => set({ user, isLoggedIn: true }),
+
+      logout: () => set({ isLoggedIn: false }),
 
       createBooking: (booking) =>
         set((state) => ({ bookings: [...state.bookings, booking] })),
@@ -108,6 +118,7 @@ export const useBookingStore = create<BookingState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         user: state.user,
+        isLoggedIn: state.isLoggedIn,
         bookings: state.bookings,
       }),
     }

@@ -50,4 +50,6 @@ export interface StudentSession {
   name: string;
   studentId: string;
   studentClass: string;
+  email?: string;
+  faculty?: string;
 }
