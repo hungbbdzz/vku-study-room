@@ -13,12 +13,11 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useBookingStore } from '../store/useBookingStore';
 import { COLORS, SPACING, RADIUS } from '../theme/colors';
 import { sendTestNotification } from '../services/notificationService';
-import { STANDARD_ACCOUNTS, signOutSupabase } from '../services/authService';
+import { signOutSupabase } from '../services/authService';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { user, setUser, logout, getMyBookings } = useBookingStore();
-  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const { user, logout, getMyBookings } = useBookingStore();
 
   const myBookings = getMyBookings();
   const upcomingCount = myBookings.filter((b) => b.status === 'upcoming').length;
@@ -136,18 +135,11 @@ export default function ProfileScreen() {
 
           <View style={styles.cardActionRow}>
             <TouchableOpacity
-              style={styles.cardSwitchBtn}
-              onPress={() => setShowSwitchModal(true)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.cardSwitchText}>🔄 Đổi tài khoản</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cardLogoutBtn}
+              style={[styles.cardLogoutBtn, { flex: 1 }]}
               onPress={handleLogout}
               activeOpacity={0.8}
             >
-              <Text style={styles.cardLogoutText}>🚪 Đăng xuất</Text>
+              <Text style={styles.cardLogoutText}>🚪 Đăng xuất khỏi hệ thống</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -194,25 +186,6 @@ export default function ProfileScreen() {
             </View>
             <Text style={styles.settingArrow}>→</Text>
           </TouchableOpacity>
-
-          <View style={styles.innerDivider} />
-
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => setShowSwitchModal(true)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.settingIcon}>
-              <Text style={{ fontSize: 18 }}>🔄</Text>
-            </View>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Đổi tài khoản nhanh (Giảng viên / SV)</Text>
-              <Text style={styles.settingSubtitle}>
-                Chuyển qua Thầy Tuấn, SV A, B, C để thử nghiệm Race Condition
-              </Text>
-            </View>
-            <Text style={styles.settingArrow}>→</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Logout Button */}
@@ -228,65 +201,6 @@ export default function ProfileScreen() {
           VKU Study Room v1.0.0 • React Native Expo 57 • Supabase Backend
         </Text>
       </ScrollView>
-
-      {/* Switch Student Modal */}
-      <Modal
-        visible={showSwitchModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSwitchModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Chọn tài khoản thử nghiệm</Text>
-            <Text style={styles.modalSub}>
-              Chuyển nhanh giữa tài khoản Giảng viên và Sinh viên:
-            </Text>
-
-            {STANDARD_ACCOUNTS.map((item) => (
-              <TouchableOpacity
-                key={item.email}
-                style={[
-                  styles.modalItem,
-                  user.email === item.email && styles.modalItemActive,
-                  item.role === 'teacher' && styles.modalItemTeacher,
-                ]}
-                onPress={() => {
-                  setUser(item);
-                  setShowSwitchModal(false);
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Text style={{ fontSize: 20 }}>{item.avatar || '👤'}</Text>
-                  <View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={styles.modalName}>{item.name}</Text>
-                      {item.role === 'teacher' && (
-                        <View style={styles.modalTeacherTag}>
-                          <Text style={styles.modalTeacherTagText}>GIẢNG VIÊN</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.modalClass}>
-                      {item.email} • {item.faculty}
-                    </Text>
-                  </View>
-                </View>
-                {user.email === item.email && (
-                  <Text style={styles.modalCheck}>✓ Đang chọn</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity
-              style={styles.modalCloseBtn}
-              onPress={() => setShowSwitchModal(false)}
-            >
-              <Text style={styles.modalCloseText}>Đóng</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

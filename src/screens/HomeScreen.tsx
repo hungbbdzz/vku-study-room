@@ -13,7 +13,7 @@ import { useBookingStore } from '../store/useBookingStore';
 import RoomCard from '../components/RoomCard';
 import { COLORS, SPACING, RADIUS } from '../theme/colors';
 import { RootStackParamList } from '../navigation/types';
-import { STANDARD_ACCOUNTS, signOutSupabase } from '../services/authService';
+import { signOutSupabase } from '../services/authService';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
@@ -46,9 +46,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [building, setBuilding] = useState<Building | 'ALL'>('ALL');
   const [capacityIdx, setCapacityIdx] = useState(0);
   const [selectedEquip, setSelectedEquip] = useState<Equipment[]>([]);
-  const [showStudentModal, setShowStudentModal] = useState(false);
-
-  const { user, setUser, logout } = useBookingStore();
+  const { user, logout } = useBookingStore();
 
   const handleLogout = async () => {
     try {
@@ -125,15 +123,11 @@ export default function HomeScreen({ navigation }: Props) {
             {/* Header */}
             <View style={styles.header}>
               <View style={{ flex: 1, marginRight: SPACING.sm }}>
-                <TouchableOpacity
-                  style={styles.studentBadge}
-                  onPress={() => setShowStudentModal(true)}
-                  activeOpacity={0.8}
-                >
+                <View style={styles.studentBadge}>
                   <Text style={styles.studentBadgeText}>
-                    {user.role === 'teacher' ? '👨‍🏫' : '🎓'} {user.name} ({user.studentId}) ▾
+                    {user.role === 'teacher' ? '👨‍🏫' : '🎓'} {user.name} ({user.studentId})
                   </Text>
-                </TouchableOpacity>
+                </View>
                 <Text style={styles.title}>Đặt phòng học VKU</Text>
               </View>
               <View style={styles.headerRightCol}>
@@ -249,56 +243,6 @@ export default function HomeScreen({ navigation }: Props) {
         contentContainerStyle={styles.listContent}
       />
 
-      {/* Student Profile Switcher Modal (Perfect for Race Condition Video Demo) */}
-      <Modal visible={showStudentModal} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowStudentModal(false)}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Chuyển đổi Tài khoản (Demo)</Text>
-            <Text style={styles.modalSubtitle}>Chọn tài khoản Giảng viên hoặc Sinh viên để kiểm thử:</Text>
-            {STANDARD_ACCOUNTS.map((st) => {
-              const active = user.email === st.email;
-              return (
-                <TouchableOpacity
-                  key={st.email}
-                  style={[styles.studentCard, active && styles.studentCardActive]}
-                  onPress={() => {
-                    setUser(st);
-                    setShowStudentModal(false);
-                  }}
-                >
-                  <View style={styles.studentAvatar}>
-                    <Text style={styles.studentAvatarText}>{st.avatar || st.name.charAt(0)}</Text>
-                  </View>
-                  <View style={styles.studentInfo}>
-                    <Text style={[styles.studentName, active && styles.studentNameActive]}>
-                      {st.name} {active && '✓'}
-                    </Text>
-                    <Text style={styles.studentMeta}>{st.email} • {st.faculty}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-            <TouchableOpacity
-              style={styles.modalLogoutBtn}
-              onPress={() => {
-                setShowStudentModal(false);
-                handleLogout();
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.modalLogoutText}>🚪 Đăng xuất tài khoản này</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.closeModalBtn} onPress={() => setShowStudentModal(false)}>
-              <Text style={styles.closeModalText}>Đóng</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </SafeAreaView>
   );
 }
