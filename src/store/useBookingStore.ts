@@ -72,7 +72,7 @@ export const useBookingStore = create<BookingState>()(
   persist(
     (set, get) => ({
       user: DEFAULT_USER,
-      isLoggedIn: true, // Default to true for instant demo, can be toggled via login/logout
+      isLoggedIn: false, // Start at Login screen so teacher can test Google/Gmail Supabase login
       bookings: INITIAL_BOOKINGS,
       filter: DEFAULT_FILTER,
 
@@ -110,7 +110,11 @@ export const useBookingStore = create<BookingState>()(
 
       getMyBookings: () => {
         const { bookings, user } = get();
-        return bookings.filter((b) => b.studentId === user.studentId);
+        return bookings.filter(
+          (b) =>
+            b.studentId === user.studentId ||
+            (user.email && b.studentId === user.email)
+        );
       },
     }),
     {

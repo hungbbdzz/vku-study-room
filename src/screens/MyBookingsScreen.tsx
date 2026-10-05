@@ -20,10 +20,10 @@ export default function MyBookingsScreen() {
   const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
   const queryClient = useQueryClient();
 
-  // TanStack Query: Fetch server bookings for current student
+  // TanStack Query: Fetch server bookings for current student / teacher
   const { data: serverBookings = [], isLoading, refetch } = useQuery({
-    queryKey: ['myBookings', user.studentId],
-    queryFn: () => fetchMyBookingsApi(user.studentId),
+    queryKey: ['myBookings', user.studentId, user.email],
+    queryFn: () => fetchMyBookingsApi(user.studentId, user.email),
     staleTime: 1000 * 15,
   });
 

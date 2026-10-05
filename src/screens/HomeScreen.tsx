@@ -13,16 +13,11 @@ import { useBookingStore } from '../store/useBookingStore';
 import RoomCard from '../components/RoomCard';
 import { COLORS, SPACING, RADIUS } from '../theme/colors';
 import { RootStackParamList } from '../navigation/types';
+import { STANDARD_ACCOUNTS } from '../services/authService';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 };
-
-const DEMO_STUDENTS = [
-  { name: 'Nguyễn Văn A', studentId: '22IT001', studentClass: 'CNTT2022A' },
-  { name: 'Trần Thị B', studentId: '22IT002', studentClass: 'HTTT2022B' },
-  { name: 'Lê Hoàng C', studentId: '22IT003', studentClass: 'ANTT2021' },
-];
 
 const BUILDINGS: Array<{ label: string; value: Building | 'ALL' }> = [
   { label: 'Tất cả tòa', value: 'ALL' },
@@ -125,7 +120,9 @@ export default function HomeScreen({ navigation }: Props) {
                   onPress={() => setShowStudentModal(true)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.studentBadgeText}>🎓 {user.name} ({user.studentId}) ▾</Text>
+                  <Text style={styles.studentBadgeText}>
+                    {user.role === 'teacher' ? '👨‍🏫' : '🎓'} {user.name} ({user.studentId}) ▾
+                  </Text>
                 </TouchableOpacity>
                 <Text style={styles.title}>Đặt phòng học VKU</Text>
               </View>
@@ -241,13 +238,13 @@ export default function HomeScreen({ navigation }: Props) {
           onPress={() => setShowStudentModal(false)}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Chuyển đổi Sinh viên (Demo)</Text>
-            <Text style={styles.modalSubtitle}>Chọn tài khoản sinh viên để thử nghiệm kiểm tra trùng lặp lịch đặt phòng:</Text>
-            {DEMO_STUDENTS.map((st) => {
-              const active = user.studentId === st.studentId;
+            <Text style={styles.modalTitle}>Chuyển đổi Tài khoản (Demo)</Text>
+            <Text style={styles.modalSubtitle}>Chọn tài khoản Giảng viên hoặc Sinh viên để kiểm thử:</Text>
+            {STANDARD_ACCOUNTS.map((st) => {
+              const active = user.email === st.email;
               return (
                 <TouchableOpacity
-                  key={st.studentId}
+                  key={st.email}
                   style={[styles.studentCard, active && styles.studentCardActive]}
                   onPress={() => {
                     setUser(st);
@@ -255,13 +252,13 @@ export default function HomeScreen({ navigation }: Props) {
                   }}
                 >
                   <View style={styles.studentAvatar}>
-                    <Text style={styles.studentAvatarText}>{st.name.charAt(0)}</Text>
+                    <Text style={styles.studentAvatarText}>{st.avatar || st.name.charAt(0)}</Text>
                   </View>
                   <View style={styles.studentInfo}>
                     <Text style={[styles.studentName, active && styles.studentNameActive]}>
                       {st.name} {active && '✓'}
                     </Text>
-                    <Text style={styles.studentMeta}>MSSV: {st.studentId} • Lớp: {st.studentClass}</Text>
+                    <Text style={styles.studentMeta}>{st.email} • {st.faculty}</Text>
                   </View>
                 </TouchableOpacity>
               );

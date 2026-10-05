@@ -135,13 +135,15 @@ export async function createBookingApi(booking: {
 /**
  * Fetch all bookings for a student
  */
-export async function fetchMyBookingsApi(studentId: string): Promise<BookingRecord[]> {
+export async function fetchMyBookingsApi(studentId: string, email?: string): Promise<BookingRecord[]> {
   try {
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('created_at', { ascending: false });
+    let query = supabase.from('bookings').select('*');
+    if (email && email.toLowerCase() !== studentId.toLowerCase()) {
+      query = query.or(`student_id.eq.${studentId},student_id.eq.${email}`);
+    } else {
+      query = query.eq('student_id', studentId);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error || !data) {
       console.warn('[Supabase] fetchMyBookings error:', error?.message);

@@ -52,4 +52,8 @@ export interface StudentSession {
   studentClass: string;
   email?: string;
   faculty?: string;
+  role?: 'student' | 'teacher';
+  avatar?: string;
+  authProvider?: 'google' | 'vku_id' | 'email';
+  supabaseUserId?: string;
 }

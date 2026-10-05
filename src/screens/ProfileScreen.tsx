@@ -11,36 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBookingStore } from '../store/useBookingStore';
-import { StudentSession } from '../types/booking';
 import { COLORS, SPACING, RADIUS } from '../theme/colors';
 import { sendTestNotification } from '../services/notificationService';
-
-const DEMO_STUDENTS: Array<StudentSession & { roleDesc: string }> = [
-  {
-    name: 'Nguyễn Văn A',
-    studentId: '22IT001',
-    studentClass: 'CNTT2022A',
-    email: '22it001@vku.udn.vn',
-    faculty: 'Khoa Khoa học Máy tính',
-    roleDesc: 'Sinh viên A (Trưởng nhóm Lab)',
-  },
-  {
-    name: 'Trần Thị B',
-    studentId: '22IT002',
-    studentClass: 'HTTT2022B',
-    email: '22it002@vku.udn.vn',
-    faculty: 'Khoa Hệ thống Thông tin',
-    roleDesc: 'Sinh viên B (Test Race Condition)',
-  },
-  {
-    name: 'Lê Hoàng C',
-    studentId: '22IT003',
-    studentClass: 'ANTT2021',
-    email: '22it003@vku.udn.vn',
-    faculty: 'Khoa An toàn Thông tin',
-    roleDesc: 'Sinh viên C (Nghiên cứu sinh)',
-  },
-];
+import { STANDARD_ACCOUNTS, signOutSupabase } from '../services/authService';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -52,6 +25,9 @@ export default function ProfileScreen() {
   const completedCount = myBookings.filter((b) => b.status === 'completed').length;
   const cancelledCount = myBookings.filter((b) => b.status === 'cancelled').length;
 
+  const isTeacher = user.role === 'teacher';
+  const isGoogle = user.authProvider === 'google' || user.email?.endsWith('@gmail.com');
+
   const handleTestAlert = async () => {
     try {
       await sendTestNotification('Phòng tự học VKU', 'Nhắc nhở ca học bắt đầu sau 15 phút');
@@ -61,16 +37,19 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Xác nhận đăng xuất',
-      'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản sinh viên này không?',
+      `Bạn có chắc chắn muốn đăng xuất khỏi tài khoản ${user.name} không?`,
       [
         { text: 'Hủy', style: 'cancel' },
         {
           text: 'Đăng xuất',
           style: 'destructive',
-          onPress: () => logout(),
+          onPress: async () => {
+            await signOutSupabase();
+            logout();
+          },
         },
       ]
     );
@@ -88,29 +67,46 @@ export default function ProfileScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Hồ sơ sinh viên</Text>
-          <View style={styles.vkuBadge}>
-            <Text style={styles.vkuBadgeText}>VKU ID</Text>
+          <Text style={styles.headerTitle}>
+            {isTeacher ? 'Hồ sơ Giảng viên' : 'Hồ sơ sinh viên'}
+          </Text>
+          <View style={styles.badgeRow}>
+            {isGoogle && (
+              <View style={styles.googleBadge}>
+                <Text style={styles.googleBadgeText}>G GMAIL</Text>
+              </View>
+            )}
+            <View style={styles.vkuBadge}>
+              <Text style={styles.vkuBadgeText}>VKU ID</Text>
+            </View>
           </View>
         </View>
 
         {/* Profile Card */}
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, isTeacher && styles.profileCardTeacher]}>
           <View style={styles.avatarRow}>
-            <View style={styles.avatar}>
+            <View style={[styles.avatar, isTeacher && styles.avatarTeacher]}>
               <Text style={styles.avatarText}>
-                {user.name.split(' ').pop()?.[0] || 'SV'}
+                {user.avatar || (isTeacher ? '👨‍🏫' : user.name.split(' ').pop()?.[0] || 'SV')}
               </Text>
             </View>
             <View style={styles.profileTextCol}>
               <Text style={styles.studentName}>{user.name}</Text>
               <View style={styles.tagRow}>
-                <View style={styles.idBadge}>
-                  <Text style={styles.idText}>{user.studentId}</Text>
-                </View>
-                <View style={styles.classBadge}>
-                  <Text style={styles.classText}>{user.studentClass}</Text>
-                </View>
+                {isTeacher ? (
+                  <View style={styles.teacherRoleTag}>
+                    <Text style={styles.teacherRoleTagText}>GIẢNG VIÊN VKU</Text>
+                  </View>
+                ) : (
+                  <>
+                    <View style={styles.idBadge}>
+                      <Text style={styles.idText}>{user.studentId}</Text>
+                    </View>
+                    <View style={styles.classBadge}>
+                      <Text style={styles.classText}>{user.studentClass}</Text>
+                    </View>
+                  </>
+                )}
               </View>
             </View>
           </View>
@@ -119,20 +115,30 @@ export default function ProfileScreen() {
 
           {/* Details list */}
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Khoa / Ngành:</Text>
-            <Text style={styles.detailVal}>{user.faculty || 'Khoa Khoa học Máy tính'}</Text>
+            <Text style={styles.detailLabel}>Khoa / Bộ môn:</Text>
+            <Text style={styles.detailVal}>
+              {user.faculty || 'Khoa Khoa học Máy tính'}
+            </Text>
           </View>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Email VKU:</Text>
+            <Text style={styles.detailLabel}>Email đăng nhập:</Text>
             <Text style={styles.detailVal}>
               {user.email || `${user.studentId.toLowerCase()}@vku.udn.vn`}
             </Text>
           </View>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Trạng thái:</Text>
+            <Text style={styles.detailLabel}>Hình thức xác thực:</Text>
+            <View style={styles.authMethodBadge}>
+              <Text style={styles.authMethodText}>
+                {isGoogle ? 'Google / Gmail OAuth' : 'Supabase Auth Backend'}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Trạng thái kết nối:</Text>
             <View style={styles.statusBadge}>
               <View style={styles.onlineDot} />
-              <Text style={styles.statusText}>Đang hoạt động</Text>
+              <Text style={styles.statusText}>Realtime Supabase</Text>
             </View>
           </View>
         </View>
@@ -191,9 +197,9 @@ export default function ProfileScreen() {
               <Text style={{ fontSize: 18 }}>🔄</Text>
             </View>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Đổi tài khoản sinh viên nhanh</Text>
+              <Text style={styles.settingTitle}>Đổi tài khoản nhanh (Giảng viên / SV)</Text>
               <Text style={styles.settingSubtitle}>
-                Chuyển qua SV A, B, C để thử nghiệm Race Condition
+                Chuyển qua Thầy Tuấn, SV A, B, C để thử nghiệm Race Condition
               </Text>
             </View>
             <Text style={styles.settingArrow}>→</Text>
@@ -210,7 +216,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <Text style={styles.versionNote}>
-          VKU Study Room v1.0.0 • React Native Expo 57
+          VKU Study Room v1.0.0 • React Native Expo 57 • Supabase Backend
         </Text>
       </ScrollView>
 
@@ -223,30 +229,41 @@ export default function ProfileScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Chọn tài khoản sinh viên</Text>
+            <Text style={styles.modalTitle}>Chọn tài khoản thử nghiệm</Text>
             <Text style={styles.modalSub}>
-              Hỗ trợ kiểm thử xung đột đặt phòng đồng thời trên thiết bị:
+              Chuyển nhanh giữa tài khoản Giảng viên và Sinh viên:
             </Text>
 
-            {DEMO_STUDENTS.map((item) => (
+            {STANDARD_ACCOUNTS.map((item) => (
               <TouchableOpacity
-                key={item.studentId}
+                key={item.email}
                 style={[
                   styles.modalItem,
-                  user.studentId === item.studentId && styles.modalItemActive,
+                  user.email === item.email && styles.modalItemActive,
+                  item.role === 'teacher' && styles.modalItemTeacher,
                 ]}
                 onPress={() => {
                   setUser(item);
                   setShowSwitchModal(false);
                 }}
               >
-                <View>
-                  <Text style={styles.modalName}>{item.name}</Text>
-                  <Text style={styles.modalClass}>
-                    {item.studentId} • {item.studentClass}
-                  </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Text style={{ fontSize: 20 }}>{item.avatar || '👤'}</Text>
+                  <View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={styles.modalName}>{item.name}</Text>
+                      {item.role === 'teacher' && (
+                        <View style={styles.modalTeacherTag}>
+                          <Text style={styles.modalTeacherTagText}>GIẢNG VIÊN</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.modalClass}>
+                      {item.email} • {item.faculty}
+                    </Text>
+                  </View>
                 </View>
-                {user.studentId === item.studentId && (
+                {user.email === item.email && (
                   <Text style={styles.modalCheck}>✓ Đang chọn</Text>
                 )}
               </TouchableOpacity>
@@ -285,6 +302,23 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.textPrimary,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  googleBadge: {
+    backgroundColor: 'rgba(66, 133, 244, 0.2)',
+    borderColor: '#4285F4',
+    borderWidth: 1,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+  },
+  googleBadgeText: {
+    color: '#60a5fa',
+    fontSize: 10,
+    fontWeight: '800',
+  },
   vkuBadge: {
     backgroundColor: 'rgba(0, 51, 102, 0.4)',
     borderColor: '#0284c7',
@@ -306,6 +340,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.cardBorder,
     marginBottom: SPACING.lg,
   },
+  profileCardTeacher: {
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    backgroundColor: 'rgba(245, 158, 11, 0.04)',
+  },
   avatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -321,10 +359,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: SPACING.base,
   },
+  avatarTeacher: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    borderColor: '#f59e0b',
+  },
   avatarText: {
-    color: COLORS.accent,
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
   },
   profileTextCol: {
     flex: 1,
@@ -338,6 +378,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 4,
+  },
+  teacherRoleTag: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    borderColor: '#f59e0b',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+  },
+  teacherRoleTagText: {
+    color: '#fbbf24',
+    fontSize: 10,
+    fontWeight: '800',
   },
   idBadge: {
     backgroundColor: 'rgba(2, 132, 199, 0.2)',
@@ -380,6 +433,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: COLORS.textPrimary,
+  },
+  authMethodBadge: {
+    backgroundColor: 'rgba(66, 133, 244, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+  },
+  authMethodText: {
+    color: '#60a5fa',
+    fontSize: 11,
+    fontWeight: '700',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -531,12 +595,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
   },
+  modalItemTeacher: {
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    backgroundColor: 'rgba(245, 158, 11, 0.05)',
+  },
   modalItemActive: {
     borderColor: COLORS.accent,
     backgroundColor: 'rgba(255, 107, 53, 0.08)',
   },
+  modalTeacherTag: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: RADIUS.sm,
+  },
+  modalTeacherTagText: {
+    color: '#fbbf24',
+    fontSize: 9,
+    fontWeight: '800',
+  },
   modalName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
