@@ -141,6 +141,23 @@ export default function ProfileScreen() {
               <Text style={styles.statusText}>Realtime Supabase</Text>
             </View>
           </View>
+
+          <View style={styles.cardActionRow}>
+            <TouchableOpacity
+              style={styles.cardSwitchBtn}
+              onPress={() => setShowSwitchModal(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.cardSwitchText}>🔄 Đổi tài khoản</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cardLogoutBtn}
+              onPress={handleLogout}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.cardLogoutText}>🚪 Đăng xuất</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Stats Section */}
@@ -463,6 +480,42 @@ const styles = StyleSheet.create({
   statusText: {
     color: COLORS.available,
     fontSize: 11,
+    fontWeight: '700',
+  },
+  cardActionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: SPACING.md,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.cardBorder,
+  },
+  cardSwitchBtn: {
+    flex: 1,
+    backgroundColor: COLORS.inputBg,
+    borderRadius: RADIUS.md,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  cardSwitchText: {
+    color: COLORS.textPrimary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cardLogoutBtn: {
+    flex: 1,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderRadius: RADIUS.md,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.35)',
+  },
+  cardLogoutText: {
+    color: '#f87171',
+    fontSize: 12,
     fontWeight: '700',
   },
   sectionTitle: {

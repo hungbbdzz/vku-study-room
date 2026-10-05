@@ -12,6 +12,8 @@ import { COLORS } from './src/theme/colors';
 import { requestNotificationPermission } from './src/services/notificationService';
 import { useBookingStore } from './src/store/useBookingStore';
 
+import { Platform, View, StyleSheet } from 'react-native';
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,26 +34,59 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: COLORS.bg },
-              animation: 'slide_from_right',
-            }}
-          >
-            {!isLoggedIn ? (
-              <Stack.Screen name="Login" component={LoginScreen} />
-            ) : (
-              <>
-                <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
-                <Stack.Screen name="RoomDetail" component={RoomDetailScreen} />
-                <Stack.Screen name="BookingPass" component={BookingPassScreen} />
-              </>
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
+        <View style={styles.webWrapper}>
+          <View style={styles.appContainer}>
+            <NavigationContainer>
+              <Stack.Navigator
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: COLORS.bg },
+                  animation: 'slide_from_right',
+                }}
+              >
+                {!isLoggedIn ? (
+                  <Stack.Screen name="Login" component={LoginScreen} />
+                ) : (
+                  <>
+                    <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
+                    <Stack.Screen name="RoomDetail" component={RoomDetailScreen} />
+                    <Stack.Screen name="BookingPass" component={BookingPassScreen} />
+                  </>
+                )}
+              </Stack.Navigator>
+            </NavigationContainer>
+          </View>
+        </View>
       </SafeAreaProvider>
     </QueryClientProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  webWrapper: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#070b14', // sleek modern dark ambient backdrop on wide desktop
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 520, // Perfect mobile/phablet width on laptop/desktop screens
+    backgroundColor: COLORS.bg,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web'
+      ? {
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.6,
+          shadowRadius: 30,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.08)',
+        }
+      : {}),
+  },
+});

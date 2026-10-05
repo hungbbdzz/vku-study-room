@@ -201,8 +201,11 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 32 },
   hero: {
     padding: SPACING.base,
-    minHeight: 220,
+    height: 230,
     justifyContent: 'space-between',
+    overflow: 'hidden',
+    borderBottomLeftRadius: RADIUS.xl,
+    borderBottomRightRadius: RADIUS.xl,
   },
   heroImageRadius: {
     borderBottomLeftRadius: RADIUS.xl,

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
-  TextInput, TouchableOpacity, StatusBar, ActivityIndicator, RefreshControl, Modal,
+  TextInput, TouchableOpacity, StatusBar, ActivityIndicator, RefreshControl, Modal, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -13,7 +13,7 @@ import { useBookingStore } from '../store/useBookingStore';
 import RoomCard from '../components/RoomCard';
 import { COLORS, SPACING, RADIUS } from '../theme/colors';
 import { RootStackParamList } from '../navigation/types';
-import { STANDARD_ACCOUNTS } from '../services/authService';
+import { STANDARD_ACCOUNTS, signOutSupabase } from '../services/authService';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
@@ -48,7 +48,25 @@ export default function HomeScreen({ navigation }: Props) {
   const [selectedEquip, setSelectedEquip] = useState<Equipment[]>([]);
   const [showStudentModal, setShowStudentModal] = useState(false);
 
-  const { user, setUser } = useBookingStore();
+  const { user, setUser, logout } = useBookingStore();
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Xác nhận đăng xuất',
+      `Bạn có muốn đăng xuất khỏi tài khoản ${user.name} không?`,
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Đăng xuất',
+          style: 'destructive',
+          onPress: async () => {
+            await signOutSupabase();
+            logout();
+          },
+        },
+      ]
+    );
+  };
 
   // TanStack Query: Fetch server state from Supabase
   const { data: rooms = MOCK_ROOMS, isLoading, refetch } = useQuery({
@@ -114,7 +132,7 @@ export default function HomeScreen({ navigation }: Props) {
           <View>
             {/* Header */}
             <View style={styles.header}>
-              <View>
+              <View style={{ flex: 1, marginRight: SPACING.sm }}>
                 <TouchableOpacity
                   style={styles.studentBadge}
                   onPress={() => setShowStudentModal(true)}
@@ -126,8 +144,17 @@ export default function HomeScreen({ navigation }: Props) {
                 </TouchableOpacity>
                 <Text style={styles.title}>Đặt phòng học VKU</Text>
               </View>
-              <View style={styles.vkuBadge}>
-                <Text style={styles.vkuText}>VKU</Text>
+              <View style={styles.headerRightCol}>
+                <View style={styles.vkuBadge}>
+                  <Text style={styles.vkuText}>VKU</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.headerLogoutBtn}
+                  onPress={handleLogout}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.headerLogoutText}>🚪 Đăng xuất</Text>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -263,6 +290,17 @@ export default function HomeScreen({ navigation }: Props) {
                 </TouchableOpacity>
               );
             })}
+            <TouchableOpacity
+              style={styles.modalLogoutBtn}
+              onPress={() => {
+                setShowStudentModal(false);
+                handleLogout();
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalLogoutText}>🚪 Đăng xuất tài khoản này</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.closeModalBtn} onPress={() => setShowStudentModal(false)}>
               <Text style={styles.closeModalText}>Đóng</Text>
             </TouchableOpacity>
@@ -411,6 +449,33 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   closeModalText: { color: COLORS.textPrimary, fontWeight: '700', fontSize: 14 },
+  modalLogoutBtn: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    marginTop: SPACING.md,
+  },
+  modalLogoutText: { color: '#f87171', fontWeight: '700', fontSize: 14 },
+  headerRightCol: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  headerLogoutBtn: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+  },
+  headerLogoutText: {
+    color: '#f87171',
+    fontSize: 11,
+    fontWeight: '700',
+  },
   emptyState: { alignItems: 'center', marginTop: 60 },
   emptyIcon: { fontSize: 48 },
   emptyText: { color: COLORS.textSecondary, marginTop: 12, fontSize: 16 },
