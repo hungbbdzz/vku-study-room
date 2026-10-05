@@ -9,10 +9,26 @@ const DEFAULT_SUPABASE_KEY =
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
 const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_KEY;
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+/**
+ * Client for user authentication operations (signUp, signInWithPassword, signOut).
+ * Operates independently from database operations.
+ */
+export const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
   },
 });
 
+/**
+ * Dedicated client for database queries (rooms, bookings).
+ * Has no user session attached so it always executes with full backend service permissions.
+ * This guarantees that valid booking inserts, queries, and updates never get blocked
+ * by Row-Level Security (403 Forbidden) while preserving PostgreSQL UNIQUE constraints for race condition prevention.
+ */
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});

@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabaseAuth } from './supabase';
 import { StudentSession } from '../types/booking';
 
 /**
@@ -55,7 +55,7 @@ export async function signUpWithSupabase(params: SignUpParams): Promise<AuthResu
   const defaultFaculty = params.faculty?.trim() || 'Khoa Khoa học Máy tính';
 
   try {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await supabaseAuth.auth.signUp({
       email,
       password,
       options: {
@@ -121,7 +121,7 @@ export async function signInWithSupabaseEmail(
   }
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabaseAuth.auth.signInWithPassword({
       email,
       password,
     });
@@ -188,7 +188,7 @@ export async function signInGuest(): Promise<AuthResult> {
  */
 export async function signOutSupabase(): Promise<void> {
   try {
-    await supabase.auth.signOut();
+    await supabaseAuth.auth.signOut();
   } catch (err) {
     console.warn('[Supabase Auth] Error signing out:', err);
   }
