@@ -38,21 +38,13 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Xác nhận đăng xuất',
-      `Bạn có chắc chắn muốn đăng xuất khỏi tài khoản ${user.name} không?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Đăng xuất',
-          style: 'destructive',
-          onPress: async () => {
-            await signOutSupabase();
-            logout();
-          },
-        },
-      ]
-    );
+    try {
+      await signOutSupabase();
+    } catch {
+      // ignore
+    } finally {
+      logout();
+    }
   };
 
   return (

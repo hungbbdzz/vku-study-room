@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
-  TouchableOpacity, Alert, StatusBar, Modal, ScrollView, RefreshControl,
+  TouchableOpacity, Alert, StatusBar, Modal, ScrollView, RefreshControl, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -53,6 +53,24 @@ export default function MyBookingsScreen() {
   });
 
   const handleCancel = (booking: BookingRecord) => {
+    const doCancel = async () => {
+      if (booking.notificationId) {
+        await cancelNotification(booking.notificationId);
+      }
+      cancelMutation.mutate(booking.id);
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmed =
+        typeof window !== 'undefined' && window.confirm
+          ? window.confirm(`Bạn có chắc muốn huỷ phòng ${booking.roomName} lúc ${booking.slot.label} không?`)
+          : true;
+      if (confirmed) {
+        doCancel();
+      }
+      return;
+    }
+
     Alert.alert(
       'Huỷ đặt phòng',
       `Bạn có chắc muốn huỷ phòng ${booking.roomName} lúc ${booking.slot.label} không?`,
@@ -61,12 +79,7 @@ export default function MyBookingsScreen() {
         {
           text: 'Huỷ đặt phòng',
           style: 'destructive',
-          onPress: async () => {
-            if (booking.notificationId) {
-              await cancelNotification(booking.notificationId);
-            }
-            cancelMutation.mutate(booking.id);
-          },
+          onPress: doCancel,
         },
       ]
     );

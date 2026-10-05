@@ -51,21 +51,13 @@ export default function HomeScreen({ navigation }: Props) {
   const { user, setUser, logout } = useBookingStore();
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Xác nhận đăng xuất',
-      `Bạn có muốn đăng xuất khỏi tài khoản ${user.name} không?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Đăng xuất',
-          style: 'destructive',
-          onPress: async () => {
-            await signOutSupabase();
-            logout();
-          },
-        },
-      ]
-    );
+    try {
+      await signOutSupabase();
+    } catch {
+      // ignore
+    } finally {
+      logout();
+    }
   };
 
   // TanStack Query: Fetch server state from Supabase
