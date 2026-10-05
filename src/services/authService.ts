@@ -222,6 +222,109 @@ export async function signInWithGoogle(
 }
 
 /**
+ * Create a new real account in Supabase Auth backend
+ */
+export interface SignUpParams {
+  name: string;
+  email: string;
+  password: string;
+  studentId?: string;
+  studentClass?: string;
+  faculty?: string;
+  role?: 'student' | 'teacher';
+}
+
+export async function signUpWithSupabase(params: SignUpParams): Promise<AuthResult> {
+  const email = params.email.trim().toLowerCase();
+  const password = params.password.trim();
+  const name = params.name.trim();
+
+  if (!email || !email.includes('@')) {
+    return { success: false, error: 'Địa chỉ Email không hợp lệ (cần chứa ký tự @).' };
+  }
+  if (!password || password.length < 6) {
+    return { success: false, error: 'Mật khẩu phải có ít nhất 6 ký tự.' };
+  }
+  if (!name) {
+    return { success: false, error: 'Vui lòng nhập họ và tên của bạn.' };
+  }
+
+  const role =
+    params.role ||
+    (email.includes('tuan') || email.includes('teacher') || email.includes('giangvien')
+      ? 'teacher'
+      : 'student');
+  const isGmail = email.endsWith('@gmail.com');
+  const defaultId =
+    params.studentId?.trim() ||
+    (role === 'teacher' ? 'GV-' + Math.floor(100 + Math.random() * 900) : email.split('@')[0].toUpperCase());
+  const defaultClass =
+    params.studentClass?.trim() || (role === 'teacher' ? 'Giảng viên VKU' : 'CNTT2022');
+  const defaultFaculty = params.faculty?.trim() || 'Khoa Khoa học Máy tính';
+
+  try {
+    // 1. Create real user in Supabase Auth backend with email_confirm: true
+    const { data: createData, error: createError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        name,
+        full_name: name,
+        studentId: defaultId,
+        studentClass: defaultClass,
+        faculty: defaultFaculty,
+        role,
+        avatar: role === 'teacher' ? '👨‍🏫' : isGmail ? '🧑' : '👨‍🎓',
+        authProvider: isGmail ? 'google' : 'email',
+      },
+    });
+
+    if (createError) {
+      if (
+        createError.message.includes('already exists') ||
+        createError.message.includes('already registered')
+      ) {
+        return {
+          success: false,
+          error: 'Email này đã tồn tại trên Supabase. Vui lòng chuyển sang tab Đăng nhập.',
+        };
+      }
+      return { success: false, error: createError.message };
+    }
+
+    // 2. Sign in to obtain live session
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    const session: StudentSession = {
+      name,
+      studentId: defaultId,
+      studentClass: defaultClass,
+      email,
+      faculty: defaultFaculty,
+      role,
+      avatar: role === 'teacher' ? '👨‍🏫' : isGmail ? '🧑' : '👨‍🎓',
+      authProvider: isGmail ? 'google' : 'email',
+      supabaseUserId: createData?.user?.id || signInData?.user?.id,
+    };
+
+    return {
+      success: true,
+      session,
+      source: 'supabase',
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'Lỗi khi tạo tài khoản trên Supabase.',
+    };
+  }
+}
+
+/**
  * Sign out from Supabase Auth backend
  */
 export async function signOutSupabase(): Promise<void> {

@@ -22,15 +22,31 @@ import {
   STANDARD_ACCOUNTS,
   signInWithSupabaseEmail,
   signInWithGoogle,
+  signUpWithSupabase,
 } from '../services/authService';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { login } = useBookingStore();
 
-  const [inputVal, setInputVal] = useState('tuannguyen@vku.udn.vn');
-  const [password, setPassword] = useState('password123');
-  const [showPassword, setShowPassword] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  // Login form state
+  const [loginInput, setLoginInput] = useState('tuannguyen@vku.udn.vn');
+  const [loginPassword, setLoginPassword] = useState('password123');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  // Register form state
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regStudentId, setRegStudentId] = useState('');
+  const [regClass, setRegClass] = useState('');
+  const [regFaculty, setRegFaculty] = useState('Khoa Khoa học Máy tính');
+  const [regRole, setRegRole] = useState<'student' | 'teacher'>('student');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+
+  // Common UI state
   const [loading, setLoading] = useState(false);
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [customGmail, setCustomGmail] = useState('');
@@ -39,7 +55,7 @@ export default function LoginScreen() {
 
   // Direct login via Supabase Auth
   const handleDirectLogin = async () => {
-    const trimmed = inputVal.trim();
+    const trimmed = loginInput.trim();
     if (!trimmed) {
       Alert.alert('Thông báo', 'Vui lòng nhập Email VKU, Gmail hoặc Mã số sinh viên.');
       return;
@@ -47,7 +63,7 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const result = await signInWithSupabaseEmail(trimmed, password);
+      const result = await signInWithSupabaseEmail(trimmed, loginPassword);
       if (result.success && result.session) {
         login(result.session);
       } else {
@@ -55,6 +71,46 @@ export default function LoginScreen() {
       }
     } catch {
       Alert.alert('Lỗi', 'Không thể kết nối tới Supabase Auth.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Direct register via Supabase Auth
+  const handleDirectRegister = async () => {
+    if (!regName.trim()) {
+      Alert.alert('Thông báo', 'Vui lòng nhập Họ và tên.');
+      return;
+    }
+    if (!regEmail.trim() || !regEmail.includes('@')) {
+      Alert.alert('Thông báo', 'Vui lòng nhập Email hoặc Gmail hợp lệ.');
+      return;
+    }
+    if (!regPassword.trim() || regPassword.length < 6) {
+      Alert.alert('Thông báo', 'Mật khẩu phải có tối thiểu 6 ký tự.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await signUpWithSupabase({
+        name: regName.trim(),
+        email: regEmail.trim(),
+        password: regPassword.trim(),
+        studentId: regStudentId.trim(),
+        studentClass: regClass.trim(),
+        faculty: regFaculty.trim(),
+        role: regRole,
+      });
+
+      if (result.success && result.session) {
+        Alert.alert('Thành công', `Đã tạo tài khoản ${result.session.name} trên Supabase thành công!`);
+        login(result.session);
+      } else {
+        Alert.alert('Đăng ký thất bại', result.error || 'Không thể tạo tài khoản trên Supabase.');
+      }
+    } catch {
+      Alert.alert('Lỗi', 'Không thể gửi yêu cầu tạo tài khoản đến Supabase.');
     } finally {
       setLoading(false);
     }
@@ -142,7 +198,7 @@ export default function LoginScreen() {
                 <Text style={styles.vkuTagText}>VKU SMART CAMPUS</Text>
               </View>
               <View style={styles.supabaseTag}>
-                <Text style={styles.supabaseTagText}>⚡ SUPABASE BACKEND</Text>
+                <Text style={styles.supabaseTagText}>⚡ SUPABASE AUTH & REALTIME</Text>
               </View>
             </View>
             <Text style={styles.appTitle}>VKU Study Room</Text>
@@ -160,91 +216,312 @@ export default function LoginScreen() {
               disabled={loading}
             >
               <View style={styles.googleIconContainer}>
-                {/* Multicolored Google 'G' icon rendered with clean styled text */}
                 <Text style={styles.googleIconText}>G</Text>
               </View>
               <View style={styles.googleBtnTextCol}>
                 <Text style={styles.googleBtnTitle}>Tiếp tục với Google / Gmail</Text>
                 <Text style={styles.googleBtnSub}>
-                  Dành cho Giảng viên & Sinh viên VKU
+                  Đăng nhập nhanh cho Giảng viên & Sinh viên
                 </Text>
               </View>
               <Text style={styles.googleBtnArrow}>→</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Form Card for direct email / ID login */}
+          {/* FORM CARD WITH TAB SWITCHER (SIGN IN / SIGN UP) */}
           <View style={styles.formCard}>
-            <View style={styles.cardHeaderRow}>
-              <Text style={styles.formTitle}>Đăng nhập trực tiếp</Text>
-              <View style={styles.authBadge}>
-                <Text style={styles.authBadgeText}>Supabase Auth</Text>
-              </View>
-            </View>
-
-            {/* Input Email / Student ID */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email VKU / Gmail / Mã SV</Text>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>✉️</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="tuannguyen@vku.udn.vn hoặc 22IT001"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={inputVal}
-                  onChangeText={setInputVal}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-            </View>
-
-            {/* Input Password */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Mật khẩu</Text>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>🔒</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Mặc định: password123"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeBtn}
+            {/* Segmented Tab Control */}
+            <View style={styles.tabSwitchRow}>
+              <TouchableOpacity
+                style={[
+                  styles.tabSwitchBtn,
+                  authMode === 'login' && styles.tabSwitchBtnActive,
+                ]}
+                onPress={() => setAuthMode('login')}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.tabSwitchText,
+                    authMode === 'login' && styles.tabSwitchTextActive,
+                  ]}
                 >
-                  <Text style={styles.eyeText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+                  🔑 Đăng nhập
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.tabSwitchBtn,
+                  authMode === 'register' && styles.tabSwitchBtnActive,
+                ]}
+                onPress={() => setAuthMode('register')}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.tabSwitchText,
+                    authMode === 'register' && styles.tabSwitchTextActive,
+                  ]}
+                >
+                  📝 Tạo tài khoản mới
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {authMode === 'login' ? (
+              /* TAB 1: LOGIN FORM */
+              <View>
+                <View style={styles.cardHeaderRow}>
+                  <Text style={styles.formTitle}>Đăng nhập Supabase Auth</Text>
+                  <View style={styles.authBadge}>
+                    <Text style={styles.authBadgeText}>Real Backend</Text>
+                  </View>
+                </View>
+
+                {/* Input Email / Student ID */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email VKU / Gmail / Mã SV</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>✉️</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="tuannguyen@vku.udn.vn hoặc 22IT001"
+                      placeholderTextColor={COLORS.textMuted}
+                      value={loginInput}
+                      onChangeText={setLoginInput}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+                </View>
+
+                {/* Input Password */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Mật khẩu</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>🔒</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="Mặc định: password123"
+                      placeholderTextColor={COLORS.textMuted}
+                      value={loginPassword}
+                      onChangeText={setLoginPassword}
+                      secureTextEntry={!showLoginPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowLoginPassword(!showLoginPassword)}
+                      style={styles.eyeBtn}
+                    >
+                      <Text style={styles.eyeText}>
+                        {showLoginPassword ? '👁️' : '👁️‍🗨️'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Login Button */}
+                <TouchableOpacity
+                  style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
+                  onPress={handleDirectLogin}
+                  activeOpacity={0.85}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#ffffff" size="small" />
+                  ) : (
+                    <Text style={styles.loginBtnText}>Đăng nhập với Supabase</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.switchModeLink}
+                  onPress={() => setAuthMode('register')}
+                >
+                  <Text style={styles.switchModeText}>
+                    Chưa có tài khoản?{' '}
+                    <Text style={styles.switchModeHighlight}>Tạo tài khoản mới ngay</Text>
+                  </Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            ) : (
+              /* TAB 2: REGISTER FORM */
+              <View>
+                <View style={styles.cardHeaderRow}>
+                  <Text style={styles.formTitle}>Đăng ký tài khoản Supabase</Text>
+                  <View style={styles.authBadge}>
+                    <Text style={styles.authBadgeText}>Tạo User Thật</Text>
+                  </View>
+                </View>
 
-            {/* Login Button */}
-            <TouchableOpacity
-              style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
-              onPress={handleDirectLogin}
-              activeOpacity={0.85}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <Text style={styles.loginBtnText}>Đăng nhập với Supabase</Text>
-              )}
-            </TouchableOpacity>
+                {/* Input Full Name */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Họ và tên *</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>👤</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="Ví dụ: Nguyễn Văn Hùng"
+                      placeholderTextColor={COLORS.textMuted}
+                      value={regName}
+                      onChangeText={setRegName}
+                    />
+                  </View>
+                </View>
+
+                {/* Input Email */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email / Gmail *</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>✉️</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="hung@gmail.com hoặc ...@vku.udn.vn"
+                      placeholderTextColor={COLORS.textMuted}
+                      value={regEmail}
+                      onChangeText={setRegEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+                </View>
+
+                {/* Input Password */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Mật khẩu (tối thiểu 6 ký tự) *</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>🔒</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="Nhập mật khẩu an toàn"
+                      placeholderTextColor={COLORS.textMuted}
+                      value={regPassword}
+                      onChangeText={setRegPassword}
+                      secureTextEntry={!showRegPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowRegPassword(!showRegPassword)}
+                      style={styles.eyeBtn}
+                    >
+                      <Text style={styles.eyeText}>
+                        {showRegPassword ? '👁️' : '👁️‍🗨️'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Role Switcher */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Vai trò tài khoản:</Text>
+                  <View style={styles.roleBtnRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.roleSelectBtn,
+                        regRole === 'student' && styles.roleSelectBtnActive,
+                      ]}
+                      onPress={() => setRegRole('student')}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.roleSelectText,
+                          regRole === 'student' && styles.roleSelectTextActive,
+                        ]}
+                      >
+                        👨‍🎓 Sinh viên
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.roleSelectBtn,
+                        regRole === 'teacher' && styles.roleSelectBtnActive,
+                      ]}
+                      onPress={() => setRegRole('teacher')}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.roleSelectText,
+                          regRole === 'teacher' && styles.roleSelectTextActive,
+                        ]}
+                      >
+                        👨‍🏫 Giảng viên
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Student ID / Teacher Code */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>
+                    {regRole === 'teacher' ? 'Mã Giảng viên' : 'Mã số sinh viên (MSSV)'}
+                  </Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>🎓</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={regRole === 'teacher' ? 'GV-TUAN' : '22IT001'}
+                      placeholderTextColor={COLORS.textMuted}
+                      value={regStudentId}
+                      onChangeText={setRegStudentId}
+                      autoCapitalize="characters"
+                    />
+                  </View>
+                </View>
+
+                {/* Class / Faculty */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Lớp / Bộ môn</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>🏫</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={regRole === 'teacher' ? 'Khoa KHMT' : 'CNTT2022A'}
+                      placeholderTextColor={COLORS.textMuted}
+                      value={regClass}
+                      onChangeText={setRegClass}
+                    />
+                  </View>
+                </View>
+
+                {/* Register Submit Button */}
+                <TouchableOpacity
+                  style={[styles.registerSubmitBtn, loading && styles.loginBtnDisabled]}
+                  onPress={handleDirectRegister}
+                  activeOpacity={0.85}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#ffffff" size="small" />
+                  ) : (
+                    <Text style={styles.registerSubmitText}>
+                      🚀 Tạo tài khoản trên Supabase Auth
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.switchModeLink}
+                  onPress={() => setAuthMode('login')}
+                >
+                  <Text style={styles.switchModeText}>
+                    Đã có tài khoản?{' '}
+                    <Text style={styles.switchModeHighlight}>Đăng nhập ngay</Text>
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* Quick Demo Switcher Section */}
           <View style={styles.demoSection}>
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>TÀI KHOẢN MẪU CHẤM ĐIỂM (1 CHẠM)</Text>
+              <Text style={styles.dividerText}>TÀI KHOẢN MẪU CÓ SẴN TRÊN SUPABASE (1 CHẠM)</Text>
               <View style={styles.dividerLine} />
             </View>
             <Text style={styles.demoHint}>
-              Nhấn để đăng nhập tức thì với vai trò Giảng viên hoặc Sinh viên:
+              Tài khoản đã tạo sẵn trên Supabase Auth để chấm điểm nhanh:
             </Text>
 
             {STANDARD_ACCOUNTS.map((acc) => (
@@ -295,7 +572,7 @@ export default function LoginScreen() {
               Trường Đại học Công nghệ Thông tin & Truyền thông Việt - Hàn
             </Text>
             <Text style={styles.footerSubText}>
-              Học phần: Lập trình ứng dụng đa nền tảng • Backend: Supabase Realtime
+              Học phần: Lập trình ứng dụng đa nền tảng • Backend: Supabase Auth & PostgreSQL
             </Text>
           </View>
         </ScrollView>
@@ -319,7 +596,7 @@ export default function LoginScreen() {
                 Đăng nhập bằng Google
               </Text>
               <Text style={styles.googleModalSub}>
-                Chọn tài khoản Gmail để tiếp tục đến VKU Study Room
+                Chọn tài khoản Gmail để xác thực qua Supabase Auth
               </Text>
             </View>
 
@@ -450,7 +727,7 @@ export default function LoginScreen() {
                       <Text style={styles.googleAddIcon}>➕</Text>
                     </View>
                     <Text style={styles.googleAddText}>
-                      Sử dụng một tài khoản Gmail khác...
+                      Nhập địa chỉ Gmail riêng của bạn...
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -635,6 +912,38 @@ const styles = StyleSheet.create({
     borderColor: COLORS.cardBorder,
     marginBottom: SPACING.base,
   },
+  tabSwitchRow: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.inputBg,
+    borderRadius: RADIUS.md,
+    padding: 3,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  tabSwitchBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: RADIUS.sm,
+  },
+  tabSwitchBtnActive: {
+    backgroundColor: COLORS.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabSwitchText: {
+    color: COLORS.textMuted,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tabSwitchTextActive: {
+    color: COLORS.textPrimary,
+    fontWeight: '800',
+  },
   cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -642,7 +951,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   formTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
@@ -691,6 +1000,32 @@ const styles = StyleSheet.create({
   eyeText: {
     fontSize: 15,
   },
+  roleBtnRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  roleSelectBtn: {
+    flex: 1,
+    backgroundColor: COLORS.inputBg,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    borderRadius: RADIUS.md,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  roleSelectBtnActive: {
+    borderColor: COLORS.accent,
+    backgroundColor: 'rgba(255, 107, 53, 0.12)',
+  },
+  roleSelectText: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  roleSelectTextActive: {
+    color: COLORS.accent,
+    fontWeight: '800',
+  },
   loginBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.md,
@@ -704,12 +1039,42 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  registerSubmitBtn: {
+    backgroundColor: '#0284c7',
+    borderRadius: RADIUS.md,
+    height: 46,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+    shadowColor: '#0284c7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  registerSubmitText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
   loginBtnDisabled: {
     opacity: 0.65,
   },
   loginBtnText: {
     color: '#ffffff',
     fontSize: 14,
+    fontWeight: '700',
+  },
+  switchModeLink: {
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  switchModeText: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+  },
+  switchModeHighlight: {
+    color: COLORS.accentLight,
     fontWeight: '700',
   },
   demoSection: {
@@ -726,7 +1091,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBorder,
   },
   dividerText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
     color: COLORS.textMuted,
     marginHorizontal: SPACING.sm,
