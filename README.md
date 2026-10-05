@@ -9,7 +9,7 @@
 ## 1. GENERAL INFORMATION & DELIVERABLE LINKS
 * **Team Members:**
   1. Nguyễn Văn Hùng — Student ID: 23IT.B069 — Class: 23GITB — Role: Full-stack Mobile Developer / Architecture & Logic — Contribution: 100%
-* **🔗 Live Demo:** Expo Go Tunnel (ngrok) / Web Preview: `http://localhost:8081`
+* **🔗 Live Demo:** https://vku-study-room.hungabc2206.workers.dev (Cloudflare Workers) / Web Preview: http://localhost:8081
 * **💻 GitHub Repository:** `https://github.com/hungbbdzz/vku-study-room`
 * **🎥 Video Demo:** `https://youtu.be/xxx` *(Demo quy trình đặt phòng, quét mã QR check-in và kiểm thử Race Condition)*
 
