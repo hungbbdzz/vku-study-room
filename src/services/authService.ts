@@ -68,7 +68,10 @@ export async function signUpWithSupabase(params: SignUpParams): Promise<AuthResu
           role: 'student',
           avatar: '👨‍🎓',
         },
-        emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+        emailRedirectTo:
+          typeof window !== 'undefined' && window.location
+            ? window.location.origin
+            : undefined,
       },
     });
 
